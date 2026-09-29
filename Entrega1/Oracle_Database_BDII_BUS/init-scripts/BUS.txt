@@ -7,7 +7,6 @@ SET ECHO ON;
 SET FEEDBACK ON;
 
 -- Primero se Eliminan las Tablas en Orden inverso a la dependencia que tengan --
-
 DROP TABLE Proveedor_Suministra_Pieza CASCADE CONSTRAINTS;
 DROP TABLE Mecanico_Repara_Bus CASCADE CONSTRAINTS;
 DROP TABLE Bus_LlevaPor_Pasajero CASCADE CONSTRAINTS;
