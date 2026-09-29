@@ -76,23 +76,26 @@ CREATE TABLE Mecanico (
         REFERENCES Taller(CodTaller)
 );
 
-CREATE TABLE Cliente (
+
+CREATE TABLE Cliente ( -- Desastre Cliente Empresa Pasajero
     IdCliente NUMBER(10) PRIMARY KEY,
     TipoCliente VARCHAR2(10) CHECK (TipoCliente IN ('PASAJERO', 'EMPRESA'))
 );
 
-CREATE TABLE Pasajero (
-    DNI VARCHAR2(9) PRIMARY KEY,
+CREATE TABLE Pasajero ( -- Desastre Cliente Empresa Pasajero
+    IdCliente NUMBER(10) PRIMARY KEY,
     Nombre VARCHAR2(50),
     Apellidos VARCHAR2(100),
-    IdCliente NUMBER(10) UNIQUE NOT NULL,
+    FechaNacimiento DATE,
+    NombreCompleto VARCHAR2(151) GENERATED ALWAYS AS (Nombre || ' ' || Apellidos), -- ESPECIAL DE ORACLE :O
     CONSTRAINT fk_pasajero_cliente FOREIGN KEY (IdCliente) 
         REFERENCES Cliente(IdCliente) ON DELETE CASCADE
+    
 );
 
-CREATE TABLE Empresa (
-    CIF VARCHAR2(9) PRIMARY KEY,
-    IdCliente NUMBER(10) UNIQUE NOT NULL,
+CREATE TABLE Empresa ( -- Desastre Cliente Pasajero
+    IdCliente NUMBER(10) PRIMARY KEY,
+    NombreEmpresa VARCHAR2(50),
     CONSTRAINT fk_empresa_cliente FOREIGN KEY (IdCliente) 
         REFERENCES Cliente(IdCliente) ON DELETE CASCADE
 );
@@ -140,7 +143,7 @@ CREATE TABLE Billete (
 
 CREATE TABLE Proveedor (
     CIFProveedor VARCHAR2(9) PRIMARY KEY,
-    NomeEmpresa VARCHAR2(50)
+    NomeProveedor VARCHAR2(50)
 );
 
 CREATE TABLE Pieza (
@@ -219,3 +222,27 @@ CREATE TABLE Proveedor_Suministra_Pieza (
     CONSTRAINT ck_sum_precio CHECK (Precio > 0),
     constraint ck_sum_cantidad CHECK (Cantidad > 0)
 );
+
+
+-----------------------------------------------------------------------------------------------
+-- VISTAS
+--------- Obligatorias--------------------------------------------------------------------------------------
+ 
+
+BEGIN 
+    INSERT INTO Client VALUES(89, 'INVALIDO');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR ESPERADO (CHECK TIPOCLIENTE): ' || SQLERRM);
+END;
+/
+
+BEGIN
+    INSERT INTO Proveedor VALUES ('A12345678');
+    INSERT INTO Pieza VALUES (500);
+    INSERT INTO Taller VALUES (1); 
+    INSERT INTO Proveedor_Suministra_Pieza VALUES ('A12345678', 500, 1, -10.50, SYSDATE, 5);
+    EXCEPTION WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK Precio positivo): ' || SQLERRM);
+END;
+/
