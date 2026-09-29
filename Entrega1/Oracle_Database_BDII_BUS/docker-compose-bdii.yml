@@ -1,0 +1,291 @@
+services:
+
+  oracle-db:
+    image: gvenzl/oracle-free:23.26.2
+    container_name: oracle-26ai
+
+    ports:
+      - "1521:1521"
+
+    environment:
+      ORACLE_PASSWORD: Oracle12345
+      ORACLE_DATABASE: BDII
+      TZ: Europe/Madrid
+
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "BDII"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+
+    restart: unless-stopped
+
+
+  oracle-init:
+    image: gvenzl/oracle-free:23.26.2
+    container_name: oracle-bdii-init  # Mantenido para coincidir con docker logs oracle-bdii-init
+
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+
+    entrypoint: /bin/bash
+
+    command:
+      - -c
+      - |
+        set -e
+
+        echo "============================================"
+        echo " Configurando entorno BDII"
+        echo "============================================"
+
+        sqlplus -s \
+          'sys/Oracle12345@//oracle-db:1521/BDII as sysdba' <<'EOF'
+
+        SET SERVEROUTPUT ON;
+        SET FEEDBACK ON;
+        SET VERIFY OFF;
+        WHENEVER SQLERROR EXIT SQL.SQLCODE;
+
+        DECLARE
+          v_count      NUMBER;
+          v_datafile   VARCHAR2(1000);
+          v_directory  VARCHAR2(1000);
+
+        BEGIN
+
+          SELECT COUNT(*)
+            INTO v_count
+            FROM dba_tablespaces
+           WHERE tablespace_name = 'ALUMNO_DATA';
+
+          IF v_count = 0 THEN
+
+            SELECT file_name
+              INTO v_datafile
+              FROM (
+                    SELECT file_name
+                      FROM dba_data_files
+                     WHERE tablespace_name = 'USERS'
+                     ORDER BY file_id
+                   )
+             WHERE ROWNUM = 1;
+
+            v_directory :=
+              SUBSTR(
+                v_datafile,
+                1,
+                INSTR(v_datafile, '/', -1)
+              );
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Directorio de datafiles: ' || v_directory
+            );
+
+            EXECUTE IMMEDIATE
+              'CREATE TABLESPACE ALUMNO_DATA ' ||
+              'DATAFILE ''' || v_directory || 'alumno01.dbf'' ' ||
+              'SIZE 200M ' ||
+              'AUTOEXTEND ON ' ||
+              'NEXT 50M ' ||
+              'MAXSIZE 2G ' ||
+              'EXTENT MANAGEMENT LOCAL ' ||
+              'SEGMENT SPACE MANAGEMENT AUTO';
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Tablespace ALUMNO_DATA creado.'
+            );
+
+          ELSE
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Tablespace ALUMNO_DATA ya existe.'
+            );
+
+          END IF;
+
+
+          SELECT COUNT(*)
+            INTO v_count
+            FROM dba_users
+           WHERE username = 'ALUMNO';
+
+          IF v_count = 0 THEN
+
+            EXECUTE IMMEDIATE '
+              CREATE USER ALUMNO
+              IDENTIFIED BY ALUMNO
+              DEFAULT TABLESPACE ALUMNO_DATA
+              TEMPORARY TABLESPACE TEMP
+              QUOTA UNLIMITED ON ALUMNO_DATA
+            ';
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Usuario ALUMNO creado.'
+            );
+
+          ELSE
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Usuario ALUMNO ya existe.'
+            );
+
+          END IF;
+
+        END;
+        /
+
+        GRANT CREATE SESSION TO ALUMNO;
+        GRANT CREATE TABLE TO ALUMNO;
+        GRANT CREATE VIEW TO ALUMNO;
+        GRANT CREATE SEQUENCE TO ALUMNO;
+        GRANT CREATE PROCEDURE TO ALUMNO;
+        GRANT CREATE TRIGGER TO ALUMNO;
+        GRANT CREATE TYPE TO ALUMNO;
+        GRANT CREATE SYNONYM TO ALUMNO;
+
+        ALTER USER ALUMNO IDENTIFIED BY ALUMNO;
+        ALTER USER ALUMNO DEFAULT TABLESPACE ALUMNO_DATA;
+        ALTER USER ALUMNO TEMPORARY TABLESPACE TEMP;
+        ALTER USER ALUMNO QUOTA UNLIMITED ON ALUMNO_DATA;
+
+        PROMPT
+        PROMPT ============================================
+        PROMPT Configuracion BDII finalizada
+        PROMPT ============================================
+
+        EXIT;
+        EOF
+
+    restart: "no"
+
+
+  vscode-init:
+    image: lscr.io/linuxserver/code-server:4.136.2
+    container_name: oracle-vscode-init
+
+    volumes:
+      - vscode-config:/config
+
+    entrypoint: /bin/bash
+
+    command:
+      - -c
+      - |
+        set -e
+
+        EXTENSION_DIR="/config/extensions"
+        VSIX="/tmp/oracle-sqldeveloper.vsix"
+        VERSION="26.2.1"
+
+        mkdir -p "$${EXTENSION_DIR}"
+
+        echo "============================================"
+        echo " Oracle SQL Developer for VS Code"
+        echo "============================================"
+
+        ARCH="$$(uname -m)"
+
+        echo "Arquitectura detectada: $${ARCH}"
+
+        case "$${ARCH}" in
+          x86_64|amd64)
+            PLATFORM="linux-x64"
+            ;;
+          aarch64|arm64)
+            PLATFORM="linux-arm64"
+            ;;
+          *)
+            echo "ERROR: Arquitectura no soportada: $${ARCH}"
+            exit 1
+            ;;
+        esac
+
+        VSIX_URL="https://download.oracle.com/otn_software/java/sqldeveloper/sql-developer-$${PLATFORM}-$${VERSION}.vsix"
+
+        echo "Plataforma seleccionada: $${PLATFORM}"
+        echo "Version SQL Developer: $${VERSION}"
+
+        if /app/code-server/bin/code-server \
+             --extensions-dir "$${EXTENSION_DIR}" \
+             --list-extensions \
+             --show-versions 2>/dev/null \
+             | grep -qi "^oracle\.sql-developer@$${VERSION}$$"; then
+
+          echo "Oracle SQL Developer $${VERSION} ya está instalado."
+
+        else
+
+          echo "Descargando:"
+          echo "$${VSIX_URL}"
+
+          curl -fL \
+            "$${VSIX_URL}" \
+            -o "$${VSIX}"
+
+          echo "Instalando Oracle SQL Developer..."
+
+          /app/code-server/bin/code-server \
+            --extensions-dir "$${EXTENSION_DIR}" \
+            --install-extension "$${VSIX}" \
+            --force
+
+          rm -f "$${VSIX}"
+
+          chown -R 1000:1000 "$${EXTENSION_DIR}"
+
+          echo "Oracle SQL Developer instalado correctamente."
+
+        fi
+
+        echo
+        echo "Extensiones instaladas:"
+
+        /app/code-server/bin/code-server \
+          --extensions-dir "$${EXTENSION_DIR}" \
+          --list-extensions \
+          --show-versions
+
+        echo "============================================"
+        echo " Inicializacion VS Code finalizada"
+        echo "============================================"
+
+    restart: "no"
+
+
+  vscode:
+    image: lscr.io/linuxserver/code-server:4.136.2
+    container_name: oracle-vscode
+
+    ports:
+      - "2323:8443"
+
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Madrid
+      PASSWORD: OneShot 
+      
+    volumes:
+      - vscode-config:/config
+      - ./:/config/workspace
+
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+      oracle-init:
+        condition: service_completed_successfully
+      vscode-init:
+        condition: service_completed_successfully
+
+    restart: unless-stopped
+
+
+volumes:
+  oracle-data:
+  vscode-config:
