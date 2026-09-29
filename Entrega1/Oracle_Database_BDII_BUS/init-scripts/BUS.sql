@@ -19,7 +19,7 @@ DROP TABLE Bus CASCADE CONSTRAINTS;
 DROP TABLE Ruta CASCADE CONSTRAINTS; 
 DROP TABLE Estacion_Telefono CASCADE CONSTRAINTS; -- its THE MULTIVALUATED ONE
 DROP TABLE Estacion CASCADE CONSTRAINTS;
-DROP TABLE Gasolinera CASCADE CONSTRAINTS;
+DROP TABLE Gasolinera CASCADE CONSTRAINTS; 
 DROP TABLE Empresa CASCADE CONSTRAINTS;
 DROP TABLE Pasajero CASCADE CONSTRAINTS;
 DROP TABLE Cliente CASCADE CONSTRAINTS;
@@ -29,6 +29,7 @@ DROP TABLE Conductor CASCADE CONSTRAINTS;
 DROP TABLE Dependiente CASCADE CONSTRAINTS;
 DROP TABLE Gerente CASCADE CONSTRAINTS;
 DROP TABLE Empleado CASCADE CONSTRAINTS;
+DROP TABLE Billete CASCADE CONSTRAINTS;
 
 
 -----------------------------------------------------------------------------------------------
@@ -189,12 +190,12 @@ CREATE TABLE Ruta_PasaPor_Estacion (
 CREATE TABLE Bus_LlevaPor_Pasajero (
     Matricula VARCHAR2(10),
     IdRuta NUMBER(10),
-    DNI_Pasajero VARCHAR2(9) UNIQUE,
+    IdCliente NUMBER(10),
     Hora TIMESTAMP,
-    PRIMARY KEY (Matricula, IdRuta, DNI_Pasajero, Hora),
+    PRIMARY KEY (Matricula, IdRuta, IdCliente, Hora),
     CONSTRAINT fk_lleva_bus FOREIGN KEY (Matricula) REFERENCES Bus(Matricula),
     CONSTRAINT fk_lleva_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta),
-    CONSTRAINT fk_lleva_pasajero FOREIGN KEY (DNI_Pasajero) REFERENCES Pasajero(DNI)
+    CONSTRAINT fk_lleva_pasajero FOREIGN KEY (IdCliente) REFERENCES Pasajero(IdCliente) ON DELETE CASCADE
 );
 
 -- RELACIÓN N:M (Mecánico - Bus)
@@ -228,9 +229,8 @@ CREATE TABLE Proveedor_Suministra_Pieza (
 -- VISTAS
 --------- Obligatorias--------------------------------------------------------------------------------------
  
-
 BEGIN 
-    INSERT INTO Client VALUES(89, 'INVALIDO');
+    INSERT INTO Cliente VALUES(89, 'INVALIDO');
 EXCEPTION
     WHEN OTHERS THEN
         DBMS_OUTPUT.PUT_LINE('ERROR ESPERADO (CHECK TIPOCLIENTE): ' || SQLERRM);
@@ -242,7 +242,6 @@ BEGIN
     INSERT INTO Pieza VALUES (500);
     INSERT INTO Taller VALUES (1); 
     INSERT INTO Proveedor_Suministra_Pieza VALUES ('A12345678', 500, 1, -10.50, SYSDATE, 5);
-    EXCEPTION WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK Precio positivo): ' || SQLERRM);
+    EXCEPTION WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK Precio positivo): ' || SQLERRM);
 END;
 /
