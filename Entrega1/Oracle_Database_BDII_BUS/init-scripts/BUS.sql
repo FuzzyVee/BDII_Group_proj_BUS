@@ -12,6 +12,7 @@ DROP TABLE Proveedor_Suministra_Pieza CASCADE CONSTRAINTS;
 DROP TABLE Mecanico_Repara_Bus CASCADE CONSTRAINTS;
 DROP TABLE Bus_LlevaPor_Pasajero CASCADE CONSTRAINTS;
 DROP TABLE Ruta_PasaPor_Estacion CASCADE CONSTRAINTS;
+DROP TABLE Dependiente_Trabaja_Gasolinera CASCADE CONSTRAINTS;
 DROP TABLE Bono CASCADE CONSTRAINTS;
 DROP TABLE Carnet CASCADE CONSTRAINTS;
 DROP TABLE Pieza CASCADE CONSTRAINTS;
@@ -81,6 +82,7 @@ CREATE TABLE Mecanico (
 
 CREATE TABLE Cliente ( -- Desastre Cliente Empresa Pasajero
     IdCliente NUMBER(10) PRIMARY KEY,
+    EmailContacto VARCHAR2(100),
     TipoCliente VARCHAR2(10) CHECK (TipoCliente IN ('PASAJERO', 'EMPRESA'))
 );
 
@@ -98,6 +100,7 @@ CREATE TABLE Pasajero ( -- Desastre Cliente Empresa Pasajero
 CREATE TABLE Empresa ( -- Desastre Cliente Pasajero
     IdCliente NUMBER(10) PRIMARY KEY,
     NombreEmpresa VARCHAR2(50),
+    DireccionFiscal VARCHAR2(100),
     CONSTRAINT fk_empresa_cliente FOREIGN KEY (IdCliente) 
         REFERENCES Cliente(IdCliente) ON DELETE CASCADE
 );
@@ -110,12 +113,13 @@ CREATE TABLE Gasolinera (
 CREATE TABLE Estacion (
     CodEstacion NUMBER(10) PRIMARY KEY,
     CodGasolinera NUMBER(10) NOT NULL,
+    Ubicacion VARCHAR2(100),
     CONSTRAINT fk_ruta_gasolinera FOREIGN KEY (CodGasolinera) 
         REFERENCES Gasolinera(CodGasolinera)
 );
 
-CREATE TABLE Estacion_Telefono (
-CodEstacion NUMBER(10),
+CREATE TABLE Estacion_Telefono ( // Multivalued attribute for Estacion
+    CodEstacion NUMBER(10),
     Telefono VARCHAR2(15),
     PRIMARY KEY (CodEstacion, Telefono),
     CONSTRAINT fk_estacion_tfno FOREIGN KEY (CodEstacion) 
@@ -123,13 +127,18 @@ CodEstacion NUMBER(10),
 );
 
 CREATE TABLE Ruta ( -- problemas con gasolinerias y  Estacion
-    IdRuta NUMBER(10) PRIMARY KEY
+    IdRuta NUMBER(10) PRIMARY KEY,
+    Origen_Destino VARCHAR2(100) NOT NULL,
+    TiempoEstimado NUMBER(5) NOT NULL CHECK (TiempoEstimado >= 0)
 );
 
 CREATE TABLE Bus (
     Matricula VARCHAR2(10) PRIMARY KEY,
     Matricula_Sustituto VARCHAR2(10),
     NumEmpleado_Conductor NUMBER(10) NOT NULL,
+    Modelo VARCHAR2(50),
+    Estado VARCHAR2(20) CHECK (Estado IN ('OPERATIVO', 'EN REPARACION', 'FUERA DE SERVICIO')),
+    plaza NUMBER(3) CHECK (plaza > 0),
     CONSTRAINT fk_bus_sustituto FOREIGN KEY (Matricula_Sustituto) 
         REFERENCES Bus(Matricula),
     CONSTRAINT fk_bus_conductor FOREIGN KEY (NumEmpleado_Conductor) 
@@ -168,14 +177,30 @@ CREATE TABLE Carnet (
 CREATE TABLE Bono (
     IdCliente NUMBER(10),
     NumBono NUMBER(10),
+    FechaCaducidad DATE,
+    Saldo NUMBER(10) CHECK (Saldo > 0),
     PRIMARY KEY (IdCliente, NumBono),
     CONSTRAINT fk_bono_cliente FOREIGN KEY (IdCliente) 
         REFERENCES Cliente(IdCliente) ON DELETE CASCADE
 );
 
 -----------------------------------------------------------------------------------------------
--- RELATIONS
+-- ADDITIONAL RELATIONS
 -----------------------------------------------------------------------------------------------
+
+-- RELACIÓN N:1 (GASOLINERA - DEPENDIENTE) /+ GERENTE
+CREATE TABLE Dependiente_Trabaja_Gasolinera (
+    NumEmpleado_Dependiente NUMBER(10) PRIMARY KEY,
+    CodGasolinera NUMBER(10) NOT NULL,
+    NumEmpleado_Gerente NUMBER(10), -- Representa la agregacion "Supervisa"
+    FechaInicio DATE DEFAULT SYSDATE,
+    CONSTRAINT fk_dtg_dependiente FOREIGN KEY (NumEmpleado_Dependiente) 
+        REFERENCES Dependiente(NumEmpleado) ON DELETE CASCADE,
+    CONSTRAINT fk_dtg_gasolinera FOREIGN KEY (CodGasolinera) 
+        REFERENCES Gasolinera(CodGasolinera),
+    CONSTRAINT fk_dtg_gerente FOREIGN KEY (NumEmpleado_Gerente) 
+        REFERENCES Gerente(NumEmpleado)
+);
 
 -- RELACIÓN N:M (Ruta - Estación)
 CREATE TABLE Ruta_PasaPor_Estacion (
@@ -234,7 +259,7 @@ BEGIN
     INSERT INTO Cliente VALUES(89, 'INVALIDO');
 EXCEPTION
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('ERROR ESPERADO (CHECK TIPOCLIENTE): ' || SQLERRM);
+        DBMS_OUTPUT.PUT_LINE('ERROR ESPERADsO (CHECK TIPOCLIENTE): ' || SQLERRM);
 END;
 /
 
