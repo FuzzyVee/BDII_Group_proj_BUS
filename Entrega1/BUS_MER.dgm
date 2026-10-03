@@ -1,0 +1,449 @@
+{
+    "connectionName": "BDII - Niko (Alumno)",
+    "layout": {
+        "items": [
+            {
+                "type": "TABLE",
+                "name": "DEPENDIENTE_TRABAJA_GASOLINERA",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 1324.1315002441406,
+                    "y": 18,
+                    "width": 629,
+                    "height": 154
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "GERENTE",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 2363,
+                    "y": -5,
+                    "width": 321,
+                    "height": 76
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "GASOLINERA",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 925.6323547363281,
+                    "y": 100,
+                    "width": 333,
+                    "height": 72
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "ESTACION",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 436.6323547363281,
+                    "y": 71,
+                    "width": 427,
+                    "height": 124
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "RUTA_PASAPOR_ESTACION",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -140.57421875,
+                    "y": 71,
+                    "width": 496,
+                    "height": 121
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "RUTA",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -623.8500061035156,
+                    "y": 71,
+                    "width": 427,
+                    "height": 94
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "BILLETE",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -140.57421875,
+                    "y": 561,
+                    "width": 404,
+                    "height": 106
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "CARNET",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 670,
+                    "y": 218,
+                    "width": 505,
+                    "height": 112
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "EMPLEADO",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 2106,
+                    "y": 392,
+                    "width": 499,
+                    "height": 169
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "TALLER",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 951.6323547363281,
+                    "y": 667,
+                    "width": 307,
+                    "height": 71
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "CLIENTE",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -623.8500061035156,
+                    "y": 786,
+                    "width": 427,
+                    "height": 124
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "PASAJERO",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -623.8500061035156,
+                    "y": 561,
+                    "width": 427,
+                    "height": 150
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "BUS_LLEVAPOR_PASAJERO",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -631.57421875,
+                    "y": 290,
+                    "width": 491,
+                    "height": 152
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "EMPRESA",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -599.57421875,
+                    "y": 1000,
+                    "width": 427,
+                    "height": 127
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "BONO",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -16.367645263671875,
+                    "y": 773,
+                    "width": 345,
+                    "height": 150
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "PROVEEDOR_SUMINISTRA_PIEZA",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 825.5,
+                    "y": 817,
+                    "width": 568,
+                    "height": 201
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "DEPENDIENTE",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 2106,
+                    "y": 95,
+                    "width": 345,
+                    "height": 77
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "PIEZA",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 1548.1323547363281,
+                    "y": 799,
+                    "width": 427,
+                    "height": 98
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "PROVEEDOR",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 1559.6323547363281,
+                    "y": 923,
+                    "width": 404,
+                    "height": 96
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "BUS",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": -72.36764526367188,
+                    "y": 268.5,
+                    "width": 622,
+                    "height": 211
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "CONDUCTOR",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 771,
+                    "y": 371,
+                    "width": 335,
+                    "height": 71
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "MECANICO",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 951.6323547363281,
+                    "y": 498,
+                    "width": 321,
+                    "height": 100
+                }
+            },
+            {
+                "type": "TABLE",
+                "name": "MECANICO_REPARA_BUS",
+                "schema": "ALUMNO",
+                "bounds": {
+                    "x": 286,
+                    "y": 537,
+                    "width": 485,
+                    "height": 130
+                }
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_BILLETE_BUS",
+                "sourceID": "ALUMNO.BUS",
+                "targetID": "ALUMNO.BILLETE",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_EMPRESA_CLIENTE",
+                "sourceID": "ALUMNO.CLIENTE",
+                "targetID": "ALUMNO.EMPRESA",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_DTG_DEPENDIENTE",
+                "sourceID": "ALUMNO.DEPENDIENTE",
+                "targetID": "ALUMNO.DEPENDIENTE_TRABAJA_GASOLINERA",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_DTG_GASOLINERA",
+                "sourceID": "ALUMNO.GASOLINERA",
+                "targetID": "ALUMNO.DEPENDIENTE_TRABAJA_GASOLINERA",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_DTG_GERENTE",
+                "sourceID": "ALUMNO.GERENTE",
+                "targetID": "ALUMNO.DEPENDIENTE_TRABAJA_GASOLINERA",
+                "style": "dash"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_CARNET_CONDUCTOR",
+                "sourceID": "ALUMNO.CONDUCTOR",
+                "targetID": "ALUMNO.CARNET",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_BUS_SUSTITUTO",
+                "sourceID": "ALUMNO.BUS",
+                "targetID": "ALUMNO.BUS",
+                "style": "dash"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_BUS_CONDUCTOR",
+                "sourceID": "ALUMNO.CONDUCTOR",
+                "targetID": "ALUMNO.BUS",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_SUM_PROVEEDOR",
+                "sourceID": "ALUMNO.PROVEEDOR",
+                "targetID": "ALUMNO.PROVEEDOR_SUMINISTRA_PIEZA",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_SUM_PIEZA",
+                "sourceID": "ALUMNO.PIEZA",
+                "targetID": "ALUMNO.PROVEEDOR_SUMINISTRA_PIEZA",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_SUM_TALLER",
+                "sourceID": "ALUMNO.TALLER",
+                "targetID": "ALUMNO.PROVEEDOR_SUMINISTRA_PIEZA",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_DEPENDIENTE_EMPLEADO",
+                "sourceID": "ALUMNO.EMPLEADO",
+                "targetID": "ALUMNO.DEPENDIENTE",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_CONDUCTOR_EMPLEADO",
+                "sourceID": "ALUMNO.EMPLEADO",
+                "targetID": "ALUMNO.CONDUCTOR",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_PASA_RUTA",
+                "sourceID": "ALUMNO.RUTA",
+                "targetID": "ALUMNO.RUTA_PASAPOR_ESTACION",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_PASA_ESTACION",
+                "sourceID": "ALUMNO.ESTACION",
+                "targetID": "ALUMNO.RUTA_PASAPOR_ESTACION",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_RUTA_GASOLINERA",
+                "sourceID": "ALUMNO.GASOLINERA",
+                "targetID": "ALUMNO.ESTACION",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_BONO_CLIENTE",
+                "sourceID": "ALUMNO.CLIENTE",
+                "targetID": "ALUMNO.BONO",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_REPARA_MECANICO",
+                "sourceID": "ALUMNO.MECANICO",
+                "targetID": "ALUMNO.MECANICO_REPARA_BUS",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_REPARA_BUS",
+                "sourceID": "ALUMNO.BUS",
+                "targetID": "ALUMNO.MECANICO_REPARA_BUS",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_GERENTE_EMPLEADO",
+                "sourceID": "ALUMNO.EMPLEADO",
+                "targetID": "ALUMNO.GERENTE",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_PASAJERO_CLIENTE",
+                "sourceID": "ALUMNO.CLIENTE",
+                "targetID": "ALUMNO.PASAJERO",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_MECANICO_EMPLEADO",
+                "sourceID": "ALUMNO.EMPLEADO",
+                "targetID": "ALUMNO.MECANICO",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_MECANICO_TALLER",
+                "sourceID": "ALUMNO.TALLER",
+                "targetID": "ALUMNO.MECANICO",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_LLEVA_BUS",
+                "sourceID": "ALUMNO.BUS",
+                "targetID": "ALUMNO.BUS_LLEVAPOR_PASAJERO",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_LLEVA_RUTA",
+                "sourceID": "ALUMNO.RUTA",
+                "targetID": "ALUMNO.BUS_LLEVAPOR_PASAJERO",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_LLEVA_PASAJERO",
+                "sourceID": "ALUMNO.PASAJERO",
+                "targetID": "ALUMNO.BUS_LLEVAPOR_PASAJERO",
+                "style": "solid"
+            },
+            {
+                "type": "RELATION",
+                "name": "FK_EMPLEADO_SUPERVISOR",
+                "sourceID": "ALUMNO.EMPLEADO",
+                "targetID": "ALUMNO.EMPLEADO",
+                "style": "dash"
+            }
+        ]
+    }
+}

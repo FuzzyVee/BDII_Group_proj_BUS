@@ -3,11 +3,31 @@
 -- PROYECTO BDII [[BUSSESS]]
 -- ===========================================================================================
 
+SHOW CON_NAME;
+SHOW USER;
 SET ECHO ON;
 SET FEEDBACK ON;
 
--- Primero se Eliminan las Tablas en Orden inverso a la dependencia que tengan --
+-- BEGIN
+--    FOR r IN (
+--       SELECT table_name 
+--       FROM user_tables 
+--       WHERE secondary = 'N' 
+--         AND nested = 'NO'
+--         AND table_name NOT IN ('REDO_DB', 'REDO_LOG')
+--    ) LOOP
+--       BEGIN
+--          EXECUTE IMMEDIATE 'DROP TABLE "' || r.table_name || '" CASCADE CONSTRAINTS PURGE';
+--       EXCEPTION
+--          WHEN OTHERS THEN
+--             NULL;
+--       END;
+--    END LOOP;
+-- END;
+-- /
 
+-- Primero se Eliminan las Tablas en Orden inverso a la dependencia que tengan --
+-- No Encontre ningun SET NULL y eso que suelen ser comunes en relaciones N:M, asi que no hay problema de borrado en cascada --
 DROP TABLE Proveedor_Suministra_Pieza CASCADE CONSTRAINTS;
 DROP TABLE Mecanico_Repara_Bus CASCADE CONSTRAINTS;
 DROP TABLE Bus_LlevaPor_Pasajero CASCADE CONSTRAINTS;
@@ -206,7 +226,7 @@ CREATE TABLE Dependiente_Trabaja_Gasolinera (
 CREATE TABLE Ruta_PasaPor_Estacion (
     IdRuta NUMBER(10),
     CodEstacion NUMBER(10),
-    Fecha DATE,
+    Fecha DATE default SYSTIMESTAMP,
     PRIMARY KEY (IdRuta, CodEstacion, Fecha),
     CONSTRAINT fk_pasa_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta),
     CONSTRAINT fk_pasa_estacion FOREIGN KEY (CodEstacion) REFERENCES Estacion(CodEstacion)
@@ -217,7 +237,7 @@ CREATE TABLE Bus_LlevaPor_Pasajero (
     Matricula VARCHAR2(10),
     IdRuta NUMBER(10),
     IdCliente NUMBER(10),
-    Hora TIMESTAMP,
+    Hora TIMESTAMP default SYSTIMESTAMP ,
     PRIMARY KEY (Matricula, IdRuta, IdCliente, Hora),
     CONSTRAINT fk_lleva_bus FOREIGN KEY (Matricula) REFERENCES Bus(Matricula),
     CONSTRAINT fk_lleva_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta),
@@ -228,7 +248,7 @@ CREATE TABLE Bus_LlevaPor_Pasajero (
 CREATE TABLE Mecanico_Repara_Bus (
     NumEmpleado_Mecanico NUMBER(10),
     Matricula_Bus VARCHAR2(10),
-    FechaReparacion DATE,
+    FechaReparacion DATE default SYSTIMESTAMP,
     PRIMARY KEY (NumEmpleado_Mecanico, Matricula_Bus, FechaReparacion),
     CONSTRAINT fk_repara_mecanico FOREIGN KEY (NumEmpleado_Mecanico) REFERENCES Mecanico(NumEmpleado),
     CONSTRAINT fk_repara_bus FOREIGN KEY (Matricula_Bus) REFERENCES Bus(Matricula)
@@ -240,7 +260,7 @@ CREATE TABLE Proveedor_Suministra_Pieza (
     CodPieza NUMBER(10),
     CodTaller NUMBER(10),
     Precio NUMBER(10),
-    FechaSuministro DATE,
+    FechaSuministro DATE default SYSTIMESTAMP,
     Cantidad NUMBER(5),
     PRIMARY KEY (CIFProveedor, CodPieza, CodTaller, FechaSuministro),
     CONSTRAINT fk_sum_proveedor FOREIGN KEY (CIFProveedor) REFERENCES Proveedor(CIFProveedor),
@@ -251,63 +271,79 @@ CREATE TABLE Proveedor_Suministra_Pieza (
 );
 
 
------------------------------------------------------------------------------------------------
--- VISTAS Obligatorias
------------------------------------------------------------------------------------------------
- 
-BEGIN 
-    INSERT INTO Cliente VALUES(89, 'INVALIDO');
-EXCEPTION
-    WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('ERROR ESPERADsO (CHECK TIPOCLIENTE): ' || SQLERRM);
-END;
-/
 
-BEGIN
-    INSERT INTO Proveedor VALUES ('A12345678');
-    INSERT INTO Pieza VALUES (500);
-    INSERT INTO Taller VALUES (1); 
-    INSERT INTO Proveedor_Suministra_Pieza VALUES ('A12345678', 500, 1, -10.50, SYSDATE, 5);
-    EXCEPTION WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK Precio positivo): ' || SQLERRM);
-END;
-/
 
--- ----------------------------------------------------------------------------
--- 4. POBLADO DE DATOS VÁLIDOS (PRUEBA DE ÉXITO)
--- ----------------------------------------------------------------------------
-INSERT INTO Empleado VALUES (1, NULL);
-INSERT INTO Conductor VALUES (1);
-INSERT INTO Carnet VALUES (1, 'D1');
+------------------------------------------------------------------------------
+-- VISTAS OBLIGATORIAS
+------------------------------------------------------------------------------
 
-INSERT INTO Gasolinera VALUES (10);
-INSERT INTO Ruta VALUES (101, 10);
+-- Vista No Actualizable (Agregada)
+CREATE OR REPLACE VIEW v_resumen_viajes_bus AS
+SELECT b.Matricula, r.IdRuta, COUNT(l.IdCliente) AS Total_Pasajeros
+FROM Bus b
+JOIN Bus_LlevaPor_Pasajero l ON b.Matricula = l.Matricula
+JOIN Ruta r ON l.IdRuta = r.IdRuta
+GROUP BY b.Matricula, r.IdRuta;
 
-INSERT INTO Bus VALUES ('1234-ABC', NULL, 1);
+-- Vista Actualizable
+CREATE OR REPLACE VIEW v_pasajeros_activos AS
+SELECT IdCliente, Nombre, Apellidos, FechaNacimiento
+FROM Pasajero;
 
-INSERT INTO Cliente VALUES (50, 'PASAJERO');
-INSERT INTO Pasajero VALUES ('12345678A', 'Juan', 'Pérez García', 50);
+------------------------------------------------------------------------------
+-- POBLADO DE DATOS VÁLIDOS (PRUEBA DE ÉXITO)
+------------------------------------------------------------------------------
 
-INSERT INTO Bus_LlevaPor_Pasajero VALUES ('1234-ABC', 101, '12345678A', TO_TIMESTAMP('2026-10-01 08:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+INSERT INTO Empleado (NumEmpleado, Nombre, Salario, NumEmpleado_Supervisor) 
+VALUES (1, 'Carlos Gómez', 2500, NULL);
+
+INSERT INTO Conductor (NumEmpleado) VALUES (1);
+
+INSERT INTO Carnet (NumEmpleado_Conductor, TipoCarnet) VALUES (1, 'D1');
+
+INSERT INTO Gasolinera (CodGasolinera) VALUES (10);
+
+INSERT INTO Ruta (IdRuta, Origen_Destino, TiempoEstimado) 
+VALUES (101, 'Santiago - A Coruña', 45);
+
+INSERT INTO Bus (Matricula, Matricula_Sustituto, NumEmpleado_Conductor, Modelo, Estado, plaza) 
+VALUES ('1234-ABC', NULL, 1, 'Volvo 9700', 'OPERATIVO', 55);
+
+INSERT INTO Cliente (IdCliente, EmailContacto, TipoCliente) 
+VALUES (50, 'juan.perez@email.com', 'PASAJERO');
+
+INSERT INTO Pasajero (IdCliente, Nombre, Apellidos, FechaNacimiento) 
+VALUES (50, 'Juan', 'Pérez García', TO_DATE('1998-05-15', 'YYYY-MM-DD'));
+
+INSERT INTO Bus_LlevaPor_Pasajero (Matricula, IdRuta, IdCliente, Hora) 
+VALUES ('1234-ABC', 101, 50, TO_TIMESTAMP('2026-10-01 08:30:00', 'YYYY-MM-DD HH24:MI:SS'));
 
 COMMIT;
 
+------------------------------------------------------------------------------
+-- PRUEBAS DE COMPROBACIÓN RECHAZADAS (VALIDACIÓN DE RESTRICCIONES PL/SQL)
+------------------------------------------------------------------------------
+
 -- Prueba 1: Debe fallar por TipoCliente inválido en el CHECK
 BEGIN
-  INSERT INTO Cliente VALUES (99, 'INVALIDO');
+    INSERT INTO Cliente (IdCliente, EmailContacto, TipoCliente) 
+    VALUES (99, 'error@test.com', 'INVALIDO');
 EXCEPTION
-  WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK TipoCliente): ' || SQLERRM);
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK TipoCliente): ' || SQLERRM);
 END;
 /
 
 -- Prueba 2: Debe fallar por Precio negativo en Proveedor_Suministra_Pieza
 BEGIN
-  INSERT INTO Proveedor VALUES ('A12345678');
-  INSERT INTO Pieza VALUES (500);
-  INSERT INTO Taller VALUES (1);
-  INSERT INTO Proveedor_Suministra_Pieza VALUES ('A12345678', 500, 1, -10.50, SYSDATE, 5);
+    INSERT INTO Proveedor (CIFProveedor, NomeProveedor) VALUES ('A12345678', 'Repuestos Bus');
+    INSERT INTO Pieza (CodPieza, Descripcion) VALUES (500, 'Filtro de Aceite');
+    INSERT INTO Taller (CodTaller) VALUES (1);
+    INSERT INTO Proveedor_Suministra_Pieza (CIFProveedor, CodPieza, CodTaller, Precio, FechaSuministro, Cantidad) 
+    VALUES ('A12345678', 500, 1, -10, SYSDATE, 5);
 EXCEPTION
-  WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK Precio positivo): ' || SQLERRM);
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK Precio positivo): ' || SQLERRM);
 END;
 /
+
