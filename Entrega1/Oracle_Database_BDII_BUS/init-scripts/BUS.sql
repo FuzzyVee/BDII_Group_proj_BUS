@@ -249,7 +249,7 @@ CREATE TABLE Bus_LlevaPor_Pasajero (
 CREATE TABLE Mecanico_Repara_Bus (
     NumEmpleado_Mecanico NUMBER(10),
     Matricula_Bus VARCHAR2(10),
-    FechaReparacion DATE default SYSTIMESTAMP,
+    FechaReparacion TIMESTAMP default SYSTIMESTAMP,
     PRIMARY KEY (NumEmpleado_Mecanico, Matricula_Bus, FechaReparacion),
     CONSTRAINT fk_repara_mecanico FOREIGN KEY (NumEmpleado_Mecanico) REFERENCES Mecanico(NumEmpleado),
     CONSTRAINT fk_repara_bus FOREIGN KEY (Matricula_Bus) REFERENCES Bus(Matricula)
