@@ -87,7 +87,8 @@ CREATE TABLE Conductor (
 );
 
 CREATE TABLE Taller (
-    CodTaller NUMBER(10) PRIMARY KEY
+    CodTaller NUMBER(10) PRIMARY KEY,
+    Telefono VARCHAR2(15) -- its var for +34 and als0 061234567 doesnt turn into 61234567 phone number
 );
 
 CREATE TABLE Mecanico (
