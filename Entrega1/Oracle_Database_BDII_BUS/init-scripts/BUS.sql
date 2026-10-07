@@ -228,21 +228,25 @@ CREATE TABLE Ruta_PasaPor_Estacion (
     IdRuta NUMBER(10),
     CodEstacion NUMBER(10),
     Fecha DATE default SYSTIMESTAMP,
-    PRIMARY KEY (IdRuta, CodEstacion, Fecha),
-    CONSTRAINT fk_pasa_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta),
     CONSTRAINT fk_pasa_estacion FOREIGN KEY (CodEstacion) REFERENCES Estacion(CodEstacion)
 );
 
+    PRIMARY KEY (IdRuta, CodEstacion, Fecha),
+    CONSTRAINT fk_pasa_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta),
+        
 -- RELACIÓN N:M (Bus - Ruta - Pasajero)
 CREATE TABLE Bus_LlevaPor_Pasajero (
-    Matricula VARCHAR2(10),
-    IdRuta NUMBER(10),
-    IdCliente NUMBER(10),
-    Hora TIMESTAMP default SYSTIMESTAMP ,
-    PRIMARY KEY (Matricula, IdRuta, IdCliente, Hora),
+    IdViaje NUMBER(10) GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Matricula VARCHAR2(10) NOT NULL,
+    IdRuta NUMBER(10) NOT NULL,
+    IdCliente NUMBER(10) NOT NULL,
+    Hora TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    
     CONSTRAINT fk_lleva_bus FOREIGN KEY (Matricula) REFERENCES Bus(Matricula),
     CONSTRAINT fk_lleva_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta),
-    CONSTRAINT fk_lleva_pasajero FOREIGN KEY (IdCliente) REFERENCES Pasajero(IdCliente) ON DELETE CASCADE
+    CONSTRAINT fk_lleva_pasajero FOREIGN KEY (IdCliente) REFERENCES Pasajero(IdCliente) ON DELETE CASCADE,
+    -- Restricción UNIQUE para evitar que el mismo pasajero compre dos billetes idénticos
+    CONSTRAINT uk_viaje_cliente UNIQUE (Matricula, IdRuta, IdCliente, Hora)
 );
 
 -- RELACIÓN N:M (Mecánico - Bus)
