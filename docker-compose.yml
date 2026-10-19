@@ -1,0 +1,90 @@
+services:
+  oracle-db:
+    image: gvenzl/oracle-free:23.26.2
+    container_name: oracle-26ai
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: Oracle12345
+      ORACLE_DATABASE: BDII
+      TZ: Europe/Madrid
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "BDII"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+    restart: unless-stopped
+
+  oracle-init:
+    image: gvenzl/oracle-free:23.26.2
+    container_name: oracle-bdii-init
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        set -e
+
+        echo "============================================"
+        echo " 1. Verificando entorno y usuario ALUMNO"
+        echo "============================================"
+
+        sqlplus -s \
+          'sys/Oracle12345@//oracle-db:1521/BDII as sysdba' <<'EOF'
+
+        SET SERVEROUTPUT ON;
+        SET FEEDBACK ON;
+        SET VERIFY OFF;
+        WHENEVER SQLERROR EXIT SQL.SQLCODE;
+
+        DECLARE
+          v_count      NUMBER;
+          v_datafile   VARCHAR2(1000);
+          v_directory  VARCHAR2(1000);
+
+        BEGIN
+          SELECT COUNT(*) INTO v_count FROM dba_tablespaces WHERE tablespace_name = 'ALUMNO_DATA';
+          IF v_count = 0 THEN
+            SELECT file_name INTO v_datafile FROM (SELECT file_name FROM dba_data_files WHERE tablespace_name = 'USERS' ORDER BY file_id) WHERE ROWNUM = 1;
+            v_directory := SUBSTR(v_datafile, 1, INSTR(v_datafile, '/', -1));
+            EXECUTE IMMEDIATE 'CREATE TABLESPACE ALUMNO_DATA DATAFILE ''' || v_directory || 'alumno01.dbf'' SIZE 200M AUTOEXTEND ON NEXT 50M MAXSIZE 2G EXTENT MANAGEMENT LOCAL SEGMENT SPACE MANAGEMENT AUTO';
+          END IF;
+
+          SELECT COUNT(*) INTO v_count FROM dba_users WHERE username = 'ALUMNO';
+          IF v_count = 0 THEN
+            EXECUTE IMMEDIATE 'CREATE USER ALUMNO IDENTIFIED BY ALUMNO DEFAULT TABLESPACE ALUMNO_DATA TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON ALUMNO_DATA';
+          END IF;
+        END;
+        /
+
+        GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE SEQUENCE, CREATE PROCEDURE, CREATE TRIGGER, CREATE TYPE, CREATE SYNONYM TO ALUMNO;
+        ALTER USER ALUMNO IDENTIFIED BY ALUMNO;
+        ALTER USER ALUMNO DEFAULT TABLESPACE ALUMNO_DATA;
+        ALTER USER ALUMNO TEMPORARY TABLESPACE TEMP;
+        ALTER USER ALUMNO QUOTA UNLIMITED ON ALUMNO_DATA;
+
+        EXIT;
+        EOF
+
+        echo "============================================"
+        echo " 2. Descargando última versión de GitHub y ejecutando BUS.sql"
+        echo "============================================"
+
+        # Añadido ?v=$(date +%s) para evitar caché de GitHub/curl
+        curl -fL "https://raw.githubusercontent.com/FuzzyVee/BDII_Group_proj_BUS/refs/heads/master/Entrega1/Oracle_Database_BDII_BUS/init-scripts/BUS.sql?v=$(date +%s)" -o /tmp/BUS.sql
+
+        sqlplus -s 'ALUMNO/ALUMNO@//oracle-db:1521/BDII' @/tmp/BUS.sql
+
+        echo "============================================"
+        echo " ¡Sincronización y ejecución completadas con éxito!"
+        echo "============================================"
+
+    restart: "no"
+
+volumes:
+  oracle-data:
