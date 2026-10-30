@@ -24,6 +24,8 @@ services:
     depends_on:
       oracle-db:
         condition: service_healthy
+    volumes:
+      - ./Entrega1/Oracle_Database_BDII_BUS/init-scripts/BUS.sql:/scripts/BUS.sql:ro
     entrypoint: /bin/bash
     command:
       - -c
@@ -31,7 +33,7 @@ services:
         set -e
 
         echo "============================================"
-        echo " 1. Verificando entorno y usuario ALUMNO"
+        echo " 1. Verificando entorno y usuarios"
         echo "============================================"
 
         sqlplus -s \
@@ -59,6 +61,7 @@ services:
           IF v_count = 0 THEN
             EXECUTE IMMEDIATE 'CREATE USER ALUMNO IDENTIFIED BY ALUMNO DEFAULT TABLESPACE ALUMNO_DATA TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON ALUMNO_DATA';
           END IF;
+
         END;
         /
 
@@ -72,16 +75,13 @@ services:
         EOF
 
         echo "============================================"
-        echo " 2. Descargando última versión de GitHub y ejecutando BUS.sql"
+        echo " 2. Ejecutando BUS.sql como ALUMNO"
         echo "============================================"
 
-        # Añadido ?v=$(date +%s) para evitar caché de GitHub/curl
-        curl -fL "https://raw.githubusercontent.com/FuzzyVee/BDII_Group_proj_BUS/refs/heads/master/Entrega1/Oracle_Database_BDII_BUS/init-scripts/BUS.sql?v=$(date +%s)" -o /tmp/BUS.sql
-
-        sqlplus -s 'ALUMNO/ALUMNO@//oracle-db:1521/BDII' @/tmp/BUS.sql
+        sqlplus -L -s 'ALUMNO/ALUMNO@//oracle-db:1521/BDII' @/scripts/BUS.sql
 
         echo "============================================"
-        echo " ¡Sincronización y ejecución completadas con éxito!"
+        echo " ¡Creación de tablas completada con éxito!"
         echo "============================================"
 
     restart: "no"

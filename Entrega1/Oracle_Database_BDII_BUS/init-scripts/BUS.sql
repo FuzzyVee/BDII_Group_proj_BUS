@@ -7,6 +7,8 @@ SHOW CON_NAME;
 SHOW USER;
 SET ECHO ON;
 SET FEEDBACK ON;
+SET SQLBLANKLINES ON;
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
 
 -- BEGIN
 --    FOR r IN (
@@ -26,32 +28,25 @@ SET FEEDBACK ON;
 -- END;
 -- /
 
--- Primero se Eliminan las Tablas en Orden inverso a la dependencia que tengan --
--- No Encontre ningun SET NULL y eso que suelen ser comunes en relaciones N:M, asi que no hay problema de borrado en cascada --
-DROP TABLE Proveedor_Suministra_Pieza CASCADE CONSTRAINTS;
-DROP TABLE Mecanico_Repara_Bus CASCADE CONSTRAINTS;
-DROP TABLE Bus_LlevaPor_Pasajero CASCADE CONSTRAINTS;
-DROP TABLE Ruta_PasaPor_Estacion CASCADE CONSTRAINTS;
-DROP TABLE Dependiente_Trabaja_Gasolinera CASCADE CONSTRAINTS;
-DROP TABLE Bono CASCADE CONSTRAINTS;
-DROP TABLE Carnet CASCADE CONSTRAINTS;
-DROP TABLE Pieza CASCADE CONSTRAINTS;
-DROP TABLE Proveedor CASCADE CONSTRAINTS;
-DROP TABLE Bus CASCADE CONSTRAINTS;
-DROP TABLE Ruta CASCADE CONSTRAINTS; 
-DROP TABLE Estacion_Telefono CASCADE CONSTRAINTS; -- its THE MULTIVALUATED ONE
-DROP TABLE Estacion CASCADE CONSTRAINTS;
-DROP TABLE Gasolinera CASCADE CONSTRAINTS; 
-DROP TABLE Empresa CASCADE CONSTRAINTS;
-DROP TABLE Pasajero CASCADE CONSTRAINTS;
-DROP TABLE Cliente CASCADE CONSTRAINTS;
-DROP TABLE Mecanico CASCADE CONSTRAINTS;
-DROP TABLE Taller CASCADE CONSTRAINTS;
-DROP TABLE Conductor CASCADE CONSTRAINTS;
-DROP TABLE Dependiente CASCADE CONSTRAINTS;
-DROP TABLE Gerente CASCADE CONSTRAINTS;
-DROP TABLE Empleado CASCADE CONSTRAINTS;
-DROP TABLE Billete CASCADE CONSTRAINTS;
+-- Remove only the BUS tables so this script can be rerun without touching other objects.
+BEGIN
+    FOR r IN (
+        SELECT table_name
+        FROM user_tables
+        WHERE table_name IN (
+            'PROVEEDOR_SUMINISTRA_PIEZA', 'MECANICO_REPARA_BUS',
+            'BUS_LLEVAPOR_PASAJERO', 'RUTA_PASAPOR_ESTACION',
+            'DEPENDIENTE_TRABAJA_GASOLINERA', 'BONO', 'CARNET',
+            'PIEZA', 'PROVEEDOR', 'BUS', 'RUTA', 'ESTACION_TELEFONO',
+            'ESTACION', 'GASOLINERA', 'EMPRESA', 'PASAJERO', 'CLIENTE',
+            'MECANICO', 'TALLER', 'CONDUCTOR', 'DEPENDIENTE', 'GERENTE',
+            'EMPLEADO', 'BILLETE'
+        )
+    ) LOOP
+        EXECUTE IMMEDIATE 'DROP TABLE ' || r.table_name || ' CASCADE CONSTRAINTS PURGE';
+    END LOOP;
+END;
+/
 
 
 -----------------------------------------------------------------------------------------------
@@ -139,7 +134,7 @@ CREATE TABLE Estacion (
         REFERENCES Gasolinera(CodGasolinera)
 );
 
-CREATE TABLE Estacion_Telefono ( // Multivalued attribute for Estacion
+CREATE TABLE Estacion_Telefono ( -- Multivalued attribute for Estacion
     CodEstacion NUMBER(10),
     Telefono VARCHAR2(15),
     PRIMARY KEY (CodEstacion, Telefono),
@@ -227,13 +222,12 @@ CREATE TABLE Dependiente_Trabaja_Gasolinera (
 CREATE TABLE Ruta_PasaPor_Estacion (
     IdRuta NUMBER(10),
     CodEstacion NUMBER(10),
-    Fecha DATE default SYSTIMESTAMP,
-    CONSTRAINT fk_pasa_estacion FOREIGN KEY (CodEstacion) REFERENCES Estacion(CodEstacion)
+    Fecha DATE DEFAULT SYSDATE,
+    PRIMARY KEY (IdRuta, CodEstacion, Fecha),
+    CONSTRAINT fk_pasa_estacion FOREIGN KEY (CodEstacion) REFERENCES Estacion(CodEstacion),
+    CONSTRAINT fk_pasa_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta)
 );
 
-    PRIMARY KEY (IdRuta, CodEstacion, Fecha),
-    CONSTRAINT fk_pasa_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta),
-        
 -- RELACIÓN N:M (Bus - Ruta - Pasajero)
 CREATE TABLE Bus_LlevaPor_Pasajero (
     IdViaje NUMBER(10) GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -351,4 +345,3 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK Precio positivo): ' || SQLERRM);
 END;
 /
-
