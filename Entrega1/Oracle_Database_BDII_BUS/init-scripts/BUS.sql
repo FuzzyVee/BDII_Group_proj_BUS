@@ -345,3 +345,31 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error esperado (CHECK Precio positivo): ' || SQLERRM);
 END;
 /
+
+
+------------------------------------------------------------------------------
+-- Tablespaces de cada tipo de datos
+------------------------------------------------------------------------------
+
+
+-- Tablespace para los datos de las tablas
+CREATE SMALLFILE TABLESPACE ts_bus_datos 
+DATAFILE 'ts_bus_datos' SIZE 32M -- Initial Weight
+AUTOEXTEND ON NEXT 8M MAXSIZE 128M -- Extending Weight/Max Weight
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE --
+SEGMENT SPACE MANAGEMENT AUTO;
+
+-- Tablespace exclusivo para los índices
+CREATE SMALLFILE TABLESPACE ts_bus_indices 
+DATAFILE 'ts_bus_indices' SIZE 32M 
+AUTOEXTEND ON NEXT 8M MAXSIZE 128M   
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE 
+SEGMENT SPACE MANAGEMENT AUTO;
+
+-- Tablespace para datos históricos o particiones
+CREATE SMALLFILE TABLESPACE ts_bus_hist 
+DATAFILE 'ts_bus_hist' SIZE 32M 
+AUTOEXTEND ON NEXT 8M MAXSIZE 128M   
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE 
+SEGMENT SPACE MANAGEMENT AUTO;
+

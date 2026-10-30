@@ -18,18 +18,18 @@
 
 * [x] Iniciar la instancia local de Oracle 26ai mediante Docker Compose (`docker compose up`).
 * [ ] Verificar la conectividad de todos los integrantes del grupo a la PDB de trabajo.
-* [ ] Comprobar los parámetros del contenedor y la ruta de almacenamiento automático OMF (`db_create_file_dest`).
+* [x] Comprobar los parámetros del contenedor y la ruta de almacenamiento automático OMF (`db_create_file_dest`).
 
 ---
 
 ## 2\. Administración de Tablespaces y Cuotas (Rol Administrador / SYS)
 
-* [ ] Diseñar la distribución física de almacenamiento para los datos del proyecto del grupo.
-* [ ] Ejecutar la creación de los tres tablespaces principales con gestión local y espacio automático:
+* [x] Diseñar la distribución física de almacenamiento para los datos del proyecto del grupo.
+* [x] Ejecutar la creación de los tres tablespaces principales con gestión local y espacio automático:
   * `ts_bus_datos`: Destinado a albergar los datos de las tablas del dominio.
   * `ts_bus_indices`: Destinado a aislar los índices de la base de datos.
   * `ts_bus_hist`: Reservado para datos históricos y particiones.
-* [ ] Establecer los límites de espacio (`SIZE`, `AUTOEXTEND ON`, `MAXSIZE`) requeridos por el enunciado.
+* [x] Establecer los límites de espacio (`SIZE`, `AUTOEXTEND ON`, `MAXSIZE`) requeridos por el enunciado.
 * [ ] Conceder privilegios de creación y asignar cuotas de almacenamiento explícitas (`QUOTA`) en los tres tablespaces para las cuentas de los miembros del grupo.
 
 ---
