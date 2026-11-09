@@ -21,16 +21,20 @@ services:
   oracle-init:
     image: gvenzl/oracle-free:23.26.2
     container_name: oracle-bdii-init
+    user: oracle   # Ejecuta como el usuario nativo de Oracle
     depends_on:
       oracle-db:
         condition: service_healthy
     volumes:
       - ./Entrega1/Oracle_Database_BDII_BUS/init-scripts/BUS.sql:/scripts/BUS.sql:ro
-    entrypoint: /bin/bash
+    entrypoint: ["/bin/bash", "-lc"]
     command:
-      - -lc   # <-- Usamos -lc para que cargue automáticamente el entorno de Oracle
       - |
         set -e
+
+        # Doble seguridad para las rutas de Oracle 23ai Free
+        export ORACLE_HOME=/opt/oracle/product/23c/dbhome_1
+        export PATH=$PATH:$ORACLE_HOME/bin
 
         echo "============================================"
         echo " 1. Verificando entorno, tablespaces y usuarios"
@@ -38,7 +42,7 @@ services:
 
         sqlplus -s \
           'sys/Oracle12345@//oracle-db:1521/BDII as sysdba' <<'EOF'
-
+        
         SET SERVEROUTPUT ON;
         SET FEEDBACK ON;
         SET VERIFY OFF;
