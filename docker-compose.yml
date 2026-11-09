@@ -28,15 +28,9 @@ services:
       - ./Entrega1/Oracle_Database_BDII_BUS/init-scripts/BUS.sql:/scripts/BUS.sql:ro
     entrypoint: /bin/bash
     command:
-      - -c
+      - -lc   # <-- Usamos -lc para que cargue automáticamente el entorno de Oracle
       - |
         set -e
-
-        # ----------------------------------------------------
-        # SOLUCIÓN: Cargar variables de entorno de Oracle
-        # ----------------------------------------------------
-        export ORACLE_HOME=/opt/oracle/product/23c/dbhome_1
-        export PATH=$PATH:$ORACLE_HOME/bin
 
         echo "============================================"
         echo " 1. Verificando entorno, tablespaces y usuarios"
