@@ -3,7 +3,7 @@ services:
     image: gvenzl/oracle-free:23.26.2
     container_name: oracle-26ai
     ports:
-      - "1521:1521"
+      - "15211:1521"
     environment:
       ORACLE_PASSWORD: Oracle12345
       ORACLE_DATABASE: BDII
@@ -32,8 +32,11 @@ services:
       - |
         set -e
 
-        # Doble seguridad para las rutas de Oracle 23ai Free
+        # ====================================================
+        # CLAVE PARA EVITAR EL ERROR 45: Variables de Oracle
+        # ====================================================
         export ORACLE_HOME=/opt/oracle/product/23c/dbhome_1
+        export LD_LIBRARY_PATH=$ORACLE_HOME/lib
         export PATH=$PATH:$ORACLE_HOME/bin
 
         echo "============================================"
@@ -42,7 +45,7 @@ services:
 
         sqlplus -s \
           'sys/Oracle12345@//oracle-db:1521/BDII as sysdba' <<'EOF'
-        
+
         SET SERVEROUTPUT ON;
         SET FEEDBACK ON;
         SET VERIFY OFF;
