@@ -40,7 +40,7 @@ BEGIN
             'PIEZA', 'PROVEEDOR', 'BUS', 'RUTA', 'ESTACION_TELEFONO',
             'ESTACION', 'GASOLINERA', 'EMPRESA', 'PASAJERO', 'CLIENTE',
             'MECANICO', 'TALLER', 'CONDUCTOR', 'DEPENDIENTE', 'GERENTE',
-            'EMPLEADO', 'BILLETE'
+            'EMPLEADO', 'BILLETE','VIAJE'
         )
     ) LOOP
         EXECUTE IMMEDIATE 'DROP TABLE ' || r.table_name || ' CASCADE CONSTRAINTS PURGE';
@@ -164,6 +164,15 @@ CREATE TABLE Bus (
         REFERENCES Conductor(NumEmpleado)
 );
 
+CREATE TABLE Viaje (
+    IdViaje NUMBER(10) GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Matricula VARCHAR2(10) NOT NULL,
+    IdRuta NUMBER(10) NOT NULL,
+    FechaHoraSalida TIMESTAMP NOT NULL,
+    CONSTRAINT fk_viaje_bus FOREIGN KEY (Matricula) REFERENCES Bus(Matricula),
+    CONSTRAINT fk_viaje_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta)
+);
+
 CREATE TABLE Billete (
     CodBillete NUMBER(10) PRIMARY KEY,
     Matricula_Bus VARCHAR2(10) NOT NULL,
@@ -234,19 +243,13 @@ CREATE TABLE Ruta_PasaPor_Estacion (
     CONSTRAINT fk_pasa_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta)
 );
 
--- RELACIÓN N:M (Bus - Ruta - Pasajero)
-CREATE TABLE Bus_LlevaPor_Pasajero (
-    IdViaje NUMBER(10) GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    Matricula VARCHAR2(10) NOT NULL,
-    IdRuta NUMBER(10) NOT NULL,
+-- RELACIÓN N:M (Viaje - Pasajero)
+CREATE TABLE Viaje_Lleva_Pasajero (
+    IdViaje NUMBER(10) NOT NULL,
     IdCliente NUMBER(10) NOT NULL,
-    Hora TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
-    
-    CONSTRAINT fk_lleva_bus FOREIGN KEY (Matricula) REFERENCES Bus(Matricula),
-    CONSTRAINT fk_lleva_ruta FOREIGN KEY (IdRuta) REFERENCES Ruta(IdRuta),
-    CONSTRAINT fk_lleva_pasajero FOREIGN KEY (IdCliente) REFERENCES Pasajero(IdCliente) ON DELETE CASCADE,
-    -- Restricción UNIQUE para evitar que el mismo pasajero compre dos billetes idénticos
-    CONSTRAINT uk_viaje_cliente UNIQUE (Matricula, IdRuta, IdCliente, Hora)
+    PRIMARY KEY (IdViaje, IdCliente),
+    CONSTRAINT fk_lleva_viaje FOREIGN KEY (IdViaje) REFERENCES Viaje(IdViaje) ON DELETE CASCADE,
+    CONSTRAINT fk_lleva_pasajero FOREIGN KEY (IdCliente) REFERENCES Pasajero(IdCliente) ON DELETE CASCADE
 );
 
 -- RELACIÓN N:M (Mecánico - Bus)
@@ -275,23 +278,21 @@ CREATE TABLE Proveedor_Suministra_Pieza (
     constraint ck_sum_cantidad CHECK (Cantidad > 0)
 );
 
-
-
-
 ------------------------------------------------------------------------------
 -- VISTAS OBLIGATORIAS
 ------------------------------------------------------------------------------
 
 -- Vista No Actualizable (Agregada)
 CREATE OR REPLACE VIEW v_resumen_viajes_bus AS
-SELECT b.Matricula, r.IdRuta, COUNT(l.IdCliente) AS Total_Pasajeros
+SELECT b.Matricula, r.IdRuta, v.IdViaje, v.FechaHoraSalida, COUNT(DISTINCT l.IdCliente) AS Total_Pasajeros
 FROM Bus b
-JOIN Bus_LlevaPor_Pasajero l ON b.Matricula = l.Matricula
-JOIN Ruta r ON l.IdRuta = r.IdRuta
-GROUP BY b.Matricula, r.IdRuta;
+JOIN Viaje v ON b.Matricula = v.Matricula
+LEFT JOIN Viaje_Lleva_Pasajero l ON v.IdViaje = l.IdViaje
+JOIN Ruta r ON v.IdRuta = r.IdRuta
+GROUP BY b.Matricula, r.IdRuta, v.IdViaje, v.FechaHoraSalida;
 
 -- Vista Actualizable
-CREATE OR REPLACE VIEW v_pasajeros_activos AS
+CREATE OR REPLACE VIEW v_pasajeros AS
 SELECT IdCliente, Nombre, Apellidos, FechaNacimiento
 FROM Pasajero;
 
@@ -320,8 +321,11 @@ VALUES (50, 'juan.perez@email.com', 'PASAJERO');
 INSERT INTO Pasajero (IdCliente, Nombre, Apellidos, FechaNacimiento) 
 VALUES (50, 'Juan', 'Pérez García', TO_DATE('1998-05-15', 'YYYY-MM-DD'));
 
-INSERT INTO Bus_LlevaPor_Pasajero (Matricula, IdRuta, IdCliente, Hora) 
-VALUES ('1234-ABC', 101, 50, TO_TIMESTAMP('2026-10-01 08:30:00', 'YYYY-MM-DD HH24:MI:SS'));
+INSERT INTO Viaje (Matricula, IdRuta, FechaHoraSalida) 
+VALUES ('1234-ABC', 101, TO_TIMESTAMP('2024-06-01 08:00:00', 'YYYY-MM-DD HH24:MI:SS'));
+
+INSERT INTO Viaje_Lleva_Pasajero (IdViaje, IdCliente) 
+VALUES (1, 50);
 
 COMMIT;
 
@@ -358,24 +362,24 @@ END;
 ------------------------------------------------------------------------------
 
 
--- Tablespace para los datos de las tablas
-CREATE SMALLFILE TABLESPACE ts_bus_datos 
-DATAFILE 'ts_bus_datos' SIZE 32M -- Initial Weight
-AUTOEXTEND ON NEXT 8M MAXSIZE 128M -- Extending Weight/Max Weight
-EXTENT MANAGEMENT LOCAL AUTOALLOCATE --
-SEGMENT SPACE MANAGEMENT AUTO;
+-- -- Tablespace para los datos de las tablas
+-- CREATE SMALLFILE TABLESPACE ts_bus_datos 
+-- DATAFILE 'ts_bus_datos' SIZE 32M -- Initial Weight
+-- AUTOEXTEND ON NEXT 8M MAXSIZE 128M -- Extending Weight/Max Weight
+-- EXTENT MANAGEMENT LOCAL AUTOALLOCATE --
+-- SEGMENT SPACE MANAGEMENT AUTO;
 
--- Tablespace exclusivo para los índices
-CREATE SMALLFILE TABLESPACE ts_bus_indices 
-DATAFILE 'ts_bus_indices' SIZE 32M 
-AUTOEXTEND ON NEXT 8M MAXSIZE 128M   
-EXTENT MANAGEMENT LOCAL AUTOALLOCATE 
-SEGMENT SPACE MANAGEMENT AUTO;
+-- -- Tablespace exclusivo para los índices
+-- CREATE SMALLFILE TABLESPACE ts_bus_indices 
+-- DATAFILE 'ts_bus_indices' SIZE 32M 
+-- AUTOEXTEND ON NEXT 8M MAXSIZE 128M   
+-- EXTENT MANAGEMENT LOCAL AUTOALLOCATE 
+-- SEGMENT SPACE MANAGEMENT AUTO;
 
--- Tablespace para datos históricos o particiones
-CREATE SMALLFILE TABLESPACE ts_bus_hist 
-DATAFILE 'ts_bus_hist' SIZE 32M 
-AUTOEXTEND ON NEXT 8M MAXSIZE 128M   
-EXTENT MANAGEMENT LOCAL AUTOALLOCATE 
-SEGMENT SPACE MANAGEMENT AUTO;
+-- -- Tablespace para datos históricos o particiones
+-- CREATE SMALLFILE TABLESPACE ts_bus_hist 
+-- DATAFILE 'ts_bus_hist' SIZE 32M 
+-- AUTOEXTEND ON NEXT 8M MAXSIZE 128M   
+-- EXTENT MANAGEMENT LOCAL AUTOALLOCATE 
+-- SEGMENT SPACE MANAGEMENT AUTO;
 
