@@ -58,6 +58,8 @@ CREATE TABLE Empleado (
     Nombre varchar2(50) NOT null,
     Salario NUMBER(10) NOT null,
     NumEmpleado_Supervisor NUMBER(10),
+    TipoEmpleado VARCHAR2(10) CHECK (TipoEmpleado IN ('GERENTE','DEPENDIENTE','CONDUCTOR','MECANICO')),
+
     CONSTRAINT fk_empleado_supervisor FOREIGN KEY (NumEmpleado_Supervisor) 
         REFERENCES Empleado(NumEmpleado),
     CONSTRAINT ck_sum_salario CHECK (Salario > 0)
@@ -83,7 +85,8 @@ CREATE TABLE Conductor (
 
 CREATE TABLE Taller (
     CodTaller NUMBER(10) PRIMARY KEY,
-    Telefono VARCHAR2(15) -- its var for +34 and als0 061234567 doesnt turn into 61234567 phone number
+    Telefono VARCHAR2(15),
+    Direccion VARCHAR2(100)
 );
 
 CREATE TABLE Mecanico (
@@ -96,24 +99,24 @@ CREATE TABLE Mecanico (
 );
 
 
-CREATE TABLE Cliente ( -- Desastre Cliente Empresa Pasajero
+CREATE TABLE Cliente (
     IdCliente NUMBER(10) PRIMARY KEY,
     EmailContacto VARCHAR2(100),
     TipoCliente VARCHAR2(10) CHECK (TipoCliente IN ('PASAJERO', 'EMPRESA'))
 );
 
-CREATE TABLE Pasajero ( -- Desastre Cliente Empresa Pasajero
+CREATE TABLE Pasajero (
     IdCliente NUMBER(10) PRIMARY KEY,
     Nombre VARCHAR2(50),
     Apellidos VARCHAR2(100),
     FechaNacimiento DATE,
-    NombreCompleto VARCHAR2(151) GENERATED ALWAYS AS (Nombre || ' ' || Apellidos), -- ESPECIAL DE ORACLE :O
+    NombreCompleto VARCHAR2(151) GENERATED ALWAYS AS (Nombre || ' ' || Apellidos),
     CONSTRAINT fk_pasajero_cliente FOREIGN KEY (IdCliente) 
         REFERENCES Cliente(IdCliente) ON DELETE CASCADE
     
 );
 
-CREATE TABLE Empresa ( -- Desastre Cliente Pasajero
+CREATE TABLE Empresa (
     IdCliente NUMBER(10) PRIMARY KEY,
     NombreEmpresa VARCHAR2(50),
     DireccionFiscal VARCHAR2(100),
@@ -128,9 +131,9 @@ CREATE TABLE Gasolinera (
 
 CREATE TABLE Estacion (
     CodEstacion NUMBER(10) PRIMARY KEY,
-    CodGasolinera NUMBER(10) NOT NULL,
+    CodGasolinera NUMBER(10),
     Ubicacion VARCHAR2(100),
-    CONSTRAINT fk_ruta_gasolinera FOREIGN KEY (CodGasolinera) 
+    CONSTRAINT fk_estacion_gasolinera FOREIGN KEY (CodGasolinera) 
         REFERENCES Gasolinera(CodGasolinera)
 );
 
@@ -142,7 +145,7 @@ CREATE TABLE Estacion_Telefono ( -- Multivalued attribute for Estacion
         REFERENCES Estacion(CodEstacion) ON DELETE CASCADE
 );
 
-CREATE TABLE Ruta ( -- problemas con gasolinerias y  Estacion
+CREATE TABLE Ruta (
     IdRuta NUMBER(10) PRIMARY KEY,
     Origen_Destino VARCHAR2(100) NOT NULL,
     TiempoEstimado NUMBER(5) NOT NULL CHECK (TiempoEstimado >= 0)
@@ -150,10 +153,10 @@ CREATE TABLE Ruta ( -- problemas con gasolinerias y  Estacion
 
 CREATE TABLE Bus (
     Matricula VARCHAR2(10) PRIMARY KEY,
-    Matricula_Sustituto VARCHAR2(10),
+    Matricula_Sustituto VARCHAR2(10) UNIQUE,
     NumEmpleado_Conductor NUMBER(10) NOT NULL,
     Modelo VARCHAR2(50),
-    Estado VARCHAR2(20) CHECK (Estado IN ('OPERATIVO', 'EN REPARACION', 'FUERA DE SERVICIO')),
+    Estado VARCHAR2(20) CHECK (Estado IN ('OPERATIVO','EN REPARACION','FUERA DE SERVICIO')),
     plaza NUMBER(3) CHECK (plaza > 0),
     CONSTRAINT fk_bus_sustituto FOREIGN KEY (Matricula_Sustituto) 
         REFERENCES Bus(Matricula),
@@ -185,6 +188,7 @@ CREATE TABLE Pieza (
 CREATE TABLE Carnet (
     NumEmpleado_Conductor NUMBER(10),
     TipoCarnet VARCHAR2(10),
+    FechaCaducidad DATE,
     PRIMARY KEY (NumEmpleado_Conductor, TipoCarnet),
     CONSTRAINT fk_carnet_conductor FOREIGN KEY (NumEmpleado_Conductor) 
         REFERENCES Conductor(NumEmpleado) ON DELETE CASCADE
@@ -195,6 +199,8 @@ CREATE TABLE Bono (
     NumBono NUMBER(10),
     FechaCaducidad DATE,
     Saldo NUMBER(10) CHECK (Saldo > 0),
+    TipoBono VARCHAR2(20),
+    DistanciaValidez NUMBER(10),
     PRIMARY KEY (IdCliente, NumBono),
     CONSTRAINT fk_bono_cliente FOREIGN KEY (IdCliente) 
         REFERENCES Cliente(IdCliente) ON DELETE CASCADE

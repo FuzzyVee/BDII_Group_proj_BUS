@@ -90,6 +90,7 @@ CREATE TABLE Empleado (
     Nombre varchar2(50) NOT null,
     Salario NUMBER(10) NOT null,
     NumEmpleado_Supervisor NUMBER(10),
+    TipoEmpleado VARCHAR2(20) CHECK (TipoEmpleado IN ('GERENTE', 'DEPENDIENTE', 'CONDUCTOR', 'MECANICO')),
     CONSTRAINT fk_empleado_supervisor FOREIGN KEY (NumEmpleado_Supervisor) 
         REFERENCES Empleado(NumEmpleado),
     CONSTRAINT ck_sum_salario CHECK (Salario > 0)
@@ -217,6 +218,7 @@ CREATE TABLE Pieza (
 CREATE TABLE Carnet (
     NumEmpleado_Conductor NUMBER(10),
     TipoCarnet VARCHAR2(10),
+    FechaCaducidad DATE,
     PRIMARY KEY (NumEmpleado_Conductor, TipoCarnet),
     CONSTRAINT fk_carnet_conductor FOREIGN KEY (NumEmpleado_Conductor) 
         REFERENCES Conductor(NumEmpleado) ON DELETE CASCADE
@@ -226,6 +228,8 @@ CREATE TABLE Bono (
     IdCliente NUMBER(10),
     NumBono NUMBER(10),
     FechaCaducidad DATE,
+    DistanciaValided NUMBER(10) CHECK (DistanciaValided > 0),
+    TipoBono VARCHAR2(20),
     Saldo NUMBER(10) CHECK (Saldo > 0),
     PRIMARY KEY (IdCliente, NumBono),
     CONSTRAINT fk_bono_cliente FOREIGN KEY (IdCliente) 

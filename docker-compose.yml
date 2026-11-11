@@ -10,7 +10,7 @@ services:
       TZ: Europe/Madrid
     volumes:
       - oracle-data:/opt/oracle/oradata
-      - ./Entrega1/Oracle_Database_BDII_BUS/init-scripts:/container-entrypoint-initdb.d:ro
+      - ./Entrega2/Oracle_Database_BDII_BUS/init-scripts:/container-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "BDII"]
       interval: 10s
@@ -27,7 +27,7 @@ services:
       oracle-db:
         condition: service_healthy
     volumes:
-      - ./Entrega1/Oracle_Database_BDII_BUS/init-scripts/BUS.sql:/scripts/BUS.sql:ro
+      - ./Entrega2/Oracle_Database_BDII_BUS/init-scripts/BUS.sql:/scripts/BUS.sql:ro
     entrypoint: ["/bin/bash", "-lc"]
     command:
       - |
