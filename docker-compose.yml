@@ -1,47 +1,47 @@
 services:
+
   oracle-db:
     image: gvenzl/oracle-free:23.26.2
     container_name: oracle-26ai
+
     ports:
       - "15211:1521"
+
     environment:
       ORACLE_PASSWORD: Oracle12345
       ORACLE_DATABASE: BDII
       TZ: Europe/Madrid
+
     volumes:
       - oracle-data:/opt/oracle/oradata
-      - ./Entrega2/Oracle_Database_BDII_BUS/init-scripts:/container-entrypoint-initdb.d:ro
+
     healthcheck:
       test: ["CMD", "healthcheck.sh", "BDII"]
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 90s
+      start_period: 300s
+
     restart: unless-stopped
+
 
   oracle-init:
     image: gvenzl/oracle-free:23.26.2
     container_name: oracle-bdii-init
-    user: oracle   # Ejecuta como el usuario nativo de Oracle
+
     depends_on:
       oracle-db:
         condition: service_healthy
-    volumes:
-      - ./Entrega2/Oracle_Database_BDII_BUS/init-scripts/BUS.sql:/scripts/BUS.sql:ro
-    entrypoint: ["/bin/bash", "-lc"]
+
+    entrypoint: /bin/bash
+
     command:
+      - -c
       - |
         set -e
 
-        # ====================================================
-        # CLAVE PARA EVITAR EL ERROR 45: Variables de Oracle
-        # ====================================================
-        export ORACLE_HOME=/opt/oracle/product/23c/dbhome_1
-        export LD_LIBRARY_PATH=$ORACLE_HOME/lib
-        export PATH=$PATH:$ORACLE_HOME/bin
-
         echo "============================================"
-        echo " 1. Verificando entorno, tablespaces y usuarios"
+        echo " Configurando entorno BDII"
         echo "============================================"
 
         sqlplus -s \
@@ -58,61 +58,112 @@ services:
           v_directory  VARCHAR2(1000);
 
         BEGIN
-          -- Verificar y crear ALUMNO_DATA
-          SELECT COUNT(*) INTO v_count FROM dba_tablespaces WHERE tablespace_name = 'ALUMNO_DATA';
+
+          SELECT COUNT(*)
+            INTO v_count
+            FROM dba_tablespaces
+           WHERE tablespace_name = 'ALUMNO_DATA';
+
           IF v_count = 0 THEN
-            SELECT file_name INTO v_datafile FROM (SELECT file_name FROM dba_data_files WHERE tablespace_name = 'USERS' ORDER BY file_id) WHERE ROWNUM = 1;
-            v_directory := SUBSTR(v_datafile, 1, INSTR(v_datafile, '/', -1));
-            EXECUTE IMMEDIATE 'CREATE TABLESPACE ALUMNO_DATA DATAFILE ''' || v_directory || 'alumno01.dbf'' SIZE 200M AUTOEXTEND ON NEXT 50M MAXSIZE 2G EXTENT MANAGEMENT LOCAL SEGMENT SPACE MANAGEMENT AUTO';
+
+            SELECT file_name
+              INTO v_datafile
+              FROM (
+                    SELECT file_name
+                      FROM dba_data_files
+                     WHERE tablespace_name = 'USERS'
+                     ORDER BY file_id
+                   )
+             WHERE ROWNUM = 1;
+
+            v_directory :=
+              SUBSTR(
+                v_datafile,
+                1,
+                INSTR(v_datafile, '/', -1)
+              );
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Directorio de datafiles: ' || v_directory
+            );
+
+            EXECUTE IMMEDIATE
+              'CREATE TABLESPACE ALUMNO_DATA ' ||
+              'DATAFILE ''' || v_directory || 'alumno01.dbf'' ' ||
+              'SIZE 200M ' ||
+              'AUTOEXTEND ON ' ||
+              'NEXT 50M ' ||
+              'MAXSIZE 2G ' ||
+              'EXTENT MANAGEMENT LOCAL ' ||
+              'SEGMENT SPACE MANAGEMENT AUTO';
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Tablespace ALUMNO_DATA creado.'
+            );
+
+          ELSE
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Tablespace ALUMNO_DATA ya existe.'
+            );
+
           END IF;
 
-          -- Verificar y crear CAMPO_VALOR
-          SELECT COUNT(*) INTO v_count FROM dba_tablespaces WHERE tablespace_name = 'CAMPO_VALOR';
-          IF v_count = 0 THEN
-            SELECT file_name INTO v_datafile FROM (SELECT file_name FROM dba_data_files WHERE tablespace_name = 'USERS' ORDER BY file_id) WHERE ROWNUM = 1;
-            v_directory := SUBSTR(v_datafile, 1, INSTR(v_datafile, '/', -1));
-            EXECUTE IMMEDIATE 'CREATE TABLESPACE CAMPO_VALOR DATAFILE ''' || v_directory || 'campo_valor01.dbf'' SIZE 200M AUTOEXTEND ON NEXT 50M MAXSIZE 2G EXTENT MANAGEMENT LOCAL SEGMENT SPACE MANAGEMENT AUTO';
-          END IF;
 
-          -- Verificar y crear usuario ALUMNO
-          SELECT COUNT(*) INTO v_count FROM dba_users WHERE username = 'ALUMNO';
+          SELECT COUNT(*)
+            INTO v_count
+            FROM dba_users
+           WHERE username = 'ALUMNO';
+
           IF v_count = 0 THEN
-            EXECUTE IMMEDIATE 'CREATE USER ALUMNO IDENTIFIED BY ALUMNO DEFAULT TABLESPACE ALUMNO_DATA TEMPORARY TABLESPACE TEMP QUOTA UNLIMITED ON ALUMNO_DATA';
+
+            EXECUTE IMMEDIATE '
+              CREATE USER ALUMNO
+              IDENTIFIED BY ALUMNO
+              DEFAULT TABLESPACE ALUMNO_DATA
+              TEMPORARY TABLESPACE TEMP
+              QUOTA UNLIMITED ON ALUMNO_DATA
+            ';
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Usuario ALUMNO creado.'
+            );
+
+          ELSE
+
+            DBMS_OUTPUT.PUT_LINE(
+              'Usuario ALUMNO ya existe.'
+            );
+
           END IF;
 
         END;
         /
 
-        GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE SEQUENCE, CREATE PROCEDURE, CREATE TRIGGER, CREATE TYPE, CREATE SYNONYM TO ALUMNO;
+        GRANT CREATE SESSION TO ALUMNO;
+        GRANT CREATE TABLE TO ALUMNO;
+        GRANT CREATE VIEW TO ALUMNO;
+        GRANT CREATE SEQUENCE TO ALUMNO;
+        GRANT CREATE PROCEDURE TO ALUMNO;
+        GRANT CREATE TRIGGER TO ALUMNO;
+        GRANT CREATE TYPE TO ALUMNO;
+        GRANT CREATE SYNONYM TO ALUMNO;
+
         ALTER USER ALUMNO IDENTIFIED BY ALUMNO;
         ALTER USER ALUMNO DEFAULT TABLESPACE ALUMNO_DATA;
         ALTER USER ALUMNO TEMPORARY TABLESPACE TEMP;
         ALTER USER ALUMNO QUOTA UNLIMITED ON ALUMNO_DATA;
 
-        -- Configuración de SYSTEM (Administrador) con la tablespace CAMPO_VALOR
-        ALTER USER SYSTEM DEFAULT TABLESPACE CAMPO_VALOR;
-        ALTER USER SYSTEM QUOTA UNLIMITED ON CAMPO_VALOR;
+        PROMPT
+        PROMPT ============================================
+        PROMPT Configuracion BDII finalizada
+        PROMPT ============================================
 
         EXIT;
         EOF
 
-        echo "============================================"
-        echo " 2. Ejecutando BUS.sql como ALUMNO"
-        echo "============================================"
-
-        sqlplus -L -s 'ALUMNO/ALUMNO@//oracle-db:1521/BDII' @/scripts/BUS.sql
-
-        echo "============================================"
-        echo " 3. Ejecutando BUS.sql como SYSTEM (Administrador)"
-        echo "============================================"
-
-        sqlplus -L -s 'SYSTEM/Oracle12345@//oracle-db:1521/BDII' @/scripts/BUS.sql
-
-        echo "============================================"
-        echo " ¡Creación de tablas completada con éxito!"
-        echo "============================================"
-
     restart: "no"
+
 
 volumes:
   oracle-data:

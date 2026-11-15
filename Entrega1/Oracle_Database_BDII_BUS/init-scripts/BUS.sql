@@ -34,6 +34,7 @@ BEGIN
         SELECT table_name
         FROM user_tables
         WHERE table_name IN (
+            'DOCUMENTO_EMPLEADO', 'DOCUMENTO_BUS',
             'PROVEEDOR_SUMINISTRA_PIEZA', 'MECANICO_REPARA_BUS',
             'BUS_LLEVAPOR_PASAJERO', 'RUTA_PASAPOR_ESTACION',
             'DEPENDIENTE_TRABAJA_GASOLINERA', 'BONO', 'CARNET',
@@ -276,6 +277,32 @@ CREATE TABLE Proveedor_Suministra_Pieza (
     CONSTRAINT fk_sum_taller FOREIGN KEY (CodTaller) REFERENCES Taller(CodTaller),
     CONSTRAINT ck_sum_precio CHECK (Precio > 0),
     constraint ck_sum_cantidad CHECK (Cantidad > 0)
+);
+
+-- Documentación digital asociada a un bus (ITV, permiso de circulación, ...).
+CREATE TABLE Documento_Bus (
+    IdDocumento NUMBER(10) PRIMARY KEY,
+    Matricula VARCHAR2(10) NOT NULL,
+    TipoDocumento VARCHAR2(30),
+    Contenido BLOB,
+    FechaSubida TIMESTAMP DEFAULT SYSTIMESTAMP,
+    CONSTRAINT fk_doc_bus FOREIGN KEY (Matricula)
+        REFERENCES Bus(Matricula) ON DELETE CASCADE
+);
+
+-- Documentación personal de un trabajador (DNI, contrato, nómina, título,
+-- certificado, foto). En la ET2 su BLOB se almacena en ts_bus_BLOB.
+CREATE TABLE Documento_Empleado (
+    IdDocumento NUMBER(10) PRIMARY KEY,
+    NumEmpleado NUMBER(10) NOT NULL,
+    TipoDocumento VARCHAR2(30) NOT NULL,
+    NombreFichero VARCHAR2(200) NOT NULL,
+    Contenido BLOB NOT NULL,
+    FechaSubida TIMESTAMP DEFAULT SYSTIMESTAMP NOT NULL,
+    CONSTRAINT fk_doc_empleado FOREIGN KEY (NumEmpleado)
+        REFERENCES Empleado(NumEmpleado) ON DELETE CASCADE,
+    CONSTRAINT ck_doc_empleado_tipo
+        CHECK (TipoDocumento IN ('DNI','CONTRATO','NOMINA','TITULO','CERTIFICADO','FOTO'))
 );
 
 ------------------------------------------------------------------------------

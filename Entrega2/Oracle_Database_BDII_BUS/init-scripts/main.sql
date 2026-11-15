@@ -1,21 +1,33 @@
+-- ===========================================================================================
+-- ENTREGA 2 - SCRIPT MAESTRO
+-- Proyecto BDII [[BUSSESS]] - BDII5_BDII_5::BUS
+-- ===========================================================================================
+-- Ejecutar como ALUMNO desde SQL*Plus / SQL Developer, situado en esta carpeta.
+--
+-- Requisito previo (como SYS):
+--   1) @@TableSpaces.sql
+--   2) @@Privilegues.sql
+--
+-- Este maestro crea el esquema y carga los datos de prueba:
+--   3) @@BUS.sql
+--   4) @@Inserts.sql
+-- ===========================================================================================
+
 SET ECHO ON;
 SET FEEDBACK ON;
+SET SQLBLANKLINES ON;
+SET SERVEROUTPUT ON;
 
 PROMPT ============================================
-PROMPT Ejecutando creación de entidades fuertes...  
+PROMPT 1/2 - Creacion del esquema (BUS.sql)
 PROMPT ============================================
-@@../Strong_Entities_Init.sql;
+@@BUS.sql
 
 PROMPT ============================================
-PROMPT Ejecutando creación de entidades débiles...
+PROMPT 2/2 - Carga de datos y pruebas (Inserts.sql)
 PROMPT ============================================
-@@../Weak_Entities_Init.sql;
+@@Inserts.sql
 
 PROMPT ============================================
-PROMPT Ejecutando creación de otras entidades...
-PROMPT ============================================
-@@../Other_Entities_Init.sql;
-
-PROMPT ============================================
-PROMPT Inicialización completada con éxito.
+PROMPT Proceso completado.
 PROMPT ============================================

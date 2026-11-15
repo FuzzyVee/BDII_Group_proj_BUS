@@ -1,35 +1,72 @@
--- ============================================================
--- RENOMBRADO DE RESTRICCIONES PRIMARY KEY (ENTIDADES PRINCIPALES)
--- ============================================================
+-- ===========================================================================================
+-- ENTREGA 2 - NORMALIZACION DE NOMBRES DE RESTRICCIONES
+-- Proyecto BDII [[BUSSESS]] - BDII5_BDII_5::BUS
+-- ===========================================================================================
+-- Ejecutar como ALUMNO despues de BUS.sql.
+--
+-- En esta entrega todas las PK/UK/FK/CHECK se crean con nombre explicito
+-- (pk_*, uk_*, fk_*, ck_*), por lo que este script no deberia encontrar
+-- ninguna restriccion autogenerada SYS_C%. Se mantiene como red de seguridad
+-- para esquemas antiguos o creados sin nombres.
+-- ===========================================================================================
 
-ALTER TABLE "ALUMNO"."EMPLEADO" RENAME CONSTRAINT "SYS_C008651" TO "PK_EMPLEADO";
-ALTER TABLE "ALUMNO"."CONDUCTOR" RENAME CONSTRAINT "SYS_C008657" TO "PK_CONDUCTOR";
-ALTER TABLE "ALUMNO"."MECANICO" RENAME CONSTRAINT "SYS_C008661" TO "PK_MECANICO";
-ALTER TABLE "ALUMNO"."CARNET" RENAME CONSTRAINT "SYS_C008689" TO "PK_CARNET";
-ALTER TABLE "ALUMNO"."BUS" RENAME CONSTRAINT "SYS_C008681" TO "PK_BUS";
-ALTER TABLE "ALUMNO"."CLIENTE" RENAME CONSTRAINT "SYS_C008665" TO "PK_CLIENTE";
-ALTER TABLE "ALUMNO"."PASAJERO" RENAME CONSTRAINT "SYS_C008666" TO "PK_PASAJERO";
-ALTER TABLE "ALUMNO"."EMPRESA" RENAME CONSTRAINT "SYS_C008668" TO "PK_EMPRESA";
-ALTER TABLE "ALUMNO"."BONO" RENAME CONSTRAINT "SYS_C008692" TO "PK_BONO";
-ALTER TABLE "ALUMNO"."BILLETE" RENAME CONSTRAINT "SYS_C008685" TO "PK_BILLETE";
-ALTER TABLE "ALUMNO"."PIEZA" RENAME CONSTRAINT "SYS_C008688" TO "PK_PIEZA";
-ALTER TABLE "ALUMNO"."GERENTE" RENAME CONSTRAINT "SYS_C008653" TO "PK_GERENTE";
-ALTER TABLE "ALUMNO"."DEPENDIENTE" RENAME CONSTRAINT "SYS_C008655" TO "PK_DEPENDIENTE";
-ALTER TABLE "ALUMNO"."GASOLINERA" RENAME CONSTRAINT "SYS_C008670" TO "PK_GASOLINERA";
-ALTER TABLE "ALUMNO"."ESTACION" RENAME CONSTRAINT "SYS_C008672" TO "PK_ESTACION";
-ALTER TABLE "ALUMNO"."RUTA" RENAME CONSTRAINT "SYS_C008677" TO "PK_RUTA";
-ALTER TABLE "ALUMNO"."PROVEEDOR" RENAME CONSTRAINT "SYS_C008687" TO "PK_PROVEEDOR";
-ALTER TABLE "ALUMNO"."TALLER" RENAME CONSTRAINT "SYS_C008659" TO "PK_TALLER";
+SET ECHO ON;
+SET FEEDBACK ON;
+SET SERVEROUTPUT ON;
 
--- ============================================================
--- RENOMBRADO DE RESTRICCIONES (TABLAS DE RELACIÓN / INTERMEDIAS)
--- ============================================================
+DECLARE
+    v_sql     VARCHAR2(500);
+    v_new     VARCHAR2(128);
+    v_exists  NUMBER;
+    v_changes NUMBER := 0;
+BEGIN
+    FOR r IN (
+        SELECT table_name, constraint_name, constraint_type
+        FROM user_constraints
+        WHERE constraint_name LIKE 'SYS_C%'
+          AND constraint_type IN ('P', 'U')
+        ORDER BY table_name, constraint_type
+    ) LOOP
+        IF r.constraint_type = 'P' THEN
+            v_new := 'PK_' || SUBSTR(r.table_name, 1, 26);
+        ELSE
+            v_new := 'UK_' || SUBSTR(r.table_name, 1, 26);
+        END IF;
 
-ALTER TABLE "ALUMNO"."BUS_LLEVAPOR_PASAJERO" RENAME CONSTRAINT "SYS_C008702" TO "PK_BUS_LLEVAPOR_PASAJERO";
-ALTER TABLE "ALUMNO"."MECANICO_REPARA_BUS" RENAME CONSTRAINT "SYS_C008706" TO "PK_MECANICO_REPARA_BUS";
-ALTER TABLE "ALUMNO"."DEPENDIENTE_TRABAJA_GASOLINERA" RENAME CONSTRAINT "SYS_C008698" TO "PK_DEP_TRABAJA_GASOLINERA";
-ALTER TABLE "ALUMNO"."RUTA_PASAPOR_ESTACION" RENAME CONSTRAINT "SYS_C008696" TO "PK_RUTA_PASAPOR_ESTACION";
-ALTER TABLE "ALUMNO"."PROVEEDOR_SUMINISTRA_PIEZA" RENAME CONSTRAINT "SYS_C008711" TO "PK_PROV_SUMINISTRA_PIEZA";
+        -- Evitar colisiones si el nombre ya existe en el esquema.
+        SELECT COUNT(*) INTO v_exists
+        FROM user_constraints
+        WHERE constraint_name = v_new;
 
--- Guardar los cambios permanentemente en el diccionario
+        IF v_exists = 0 THEN
+            v_sql := 'ALTER TABLE "' || r.table_name || '" RENAME CONSTRAINT "' ||
+                     r.constraint_name || '" TO "' || v_new || '"';
+            DBMS_OUTPUT.PUT_LINE('Ejecutando: ' || v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            v_changes := v_changes + 1;
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Omitido ' || r.constraint_name ||
+                                 ': ya existe ' || v_new);
+        END IF;
+    END LOOP;
+
+    IF v_changes = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('No hay restricciones SYS_C% que renombrar.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Restricciones renombradas: ' || v_changes);
+    END IF;
+END;
+/
+
+ALTER SYSTEM SET db_recovery_file_dest_size = 10G;
+ALTER SYSTEM SET db_recovery_file_dest = '/u01/app/oracle/fast_recovery_area';
+
+PROMPT ============================================================
+PROMPT Restricciones autogeneradas restantes (deberia estar vacio)
+PROMPT ============================================================
+SELECT table_name, constraint_name, constraint_type
+FROM user_constraints
+WHERE constraint_name LIKE 'SYS_C%'
+ORDER BY table_name;
+
 COMMIT;
