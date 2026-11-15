@@ -165,6 +165,23 @@ CREATE TABLE Bus (
         REFERENCES Conductor(NumEmpleado)
 );
 
+CREATE TABLE Urbano (
+    Matricula VARCHAR2(10) PRIMARY KEY,
+    Linea_De_Bus NUMBER(3) NOT NULL,
+    CONSTRAINT fk_urbano_bus
+        FOREIGN KEY (Matricula)
+        REFERENCES Bus(Matricula)
+);
+
+CREATE TABLE Interurbano (
+    Matricula VARCHAR2(10) PRIMARY KEY,
+    Origen VARCHAR2(50),
+    Destino VARCHAR2(50),
+    Recorrido VARCHAR2(101) GENERATED ALWAYS AS (Origen || '---' || Destino),
+    CONSTRAINT fk_interurbano_bus FOREIGN KEY (Matricula)
+        REFERENCES Bus(Matricula)
+);
+
 CREATE TABLE Viaje (
     IdViaje NUMBER(10) GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     Matricula VARCHAR2(10) NOT NULL,
